@@ -1,0 +1,56 @@
+---
+title: "Lab4"
+output: html_document
+---
+
+1. Consider the following example data for a between-subjects experiment with two groups, A and B:
+
+Use R to conduct a t.test and ANOVA on this data. Then use R to prove that the results of both analyses are the same. For example, prove that the p-values are the same, and prove that the F-value and T-value are related. (3 points)
+```{r}
+library(tibble)
+
+example_data <- tibble(Group = rep(c("A","B"), each = 5),
+                       DV = c(2,4,3,5,4,7,6,5,6,7))
+
+#t test
+my_t <- t.test(DV~Group, var.equal=TRUE, data = example_data)
+
+#anova
+my_aov <- summary(aov(DV~Group, data = example_data))
+
+my_t$p.value
+my_aov[[1]]$'Pr(>F)'[1]
+
+round(my_t$p.value, digits=5) == round(my_aov[[1]]$'Pr(>F)'[1], digits=5)
+
+round(my_t$statistic^2, digits=1) == round(my_aov[[1]]$'F value', digits=1)
+
+
+```
+
+2. Look at the lab on ANOVA that I wrote for our undergraduate statistics OER lab manual https://crumplab.github.io/statisticsLab/lab-8-one-way-anova.html. That lab shows an example of obtaining data from a published paper in psych science where a one-factor ANOVA was used as a part of the analysis. Load the data, conduct the ANOVA, report a ggplot of the means, and use papaja to help you write a short results section reporting the ANOVA result. (3 points).
+
+```{r}
+library(data.table)
+#fread("https://raw.githubusercontent.com/CrumpLab/statisticsLab/master/data/Jamesetal2015Experiment2.csv")
+all_data <- read.csv(url("https://raw.githubusercontent.com/CrumpLab/statisticsLab/master/data/Jamesetal2015Experiment2.csv"))
+
+library(ggplot2)
+all_data$Condition <- as.factor(all_data$Condition)
+levels(all_data$Condition) <- c("Control",
+                                "Reactivation+Tetris", 
+                                "Tetris_only",
+                                "Reactivation_only")
+ggplot(all_data, aes(x=Condition, y=Days_One_to_Seven_Number_of_Intrusions))+
+  geom_bar(stat="summary", fun="mean", position="dodge")+
+  geom_point()
+
+my_aov <- aov(Days_One_to_Seven_Number_of_Intrusions~Condition, data = all_data)
+summary(my_aov)
+
+library(papaja)
+#apa_print(my_aov)$full_result$Condition
+
+```
+The one-factor, between-subjects ANOVA found that there was a main effect of the intervention type, `r apa_print(my_aov)$full_result$Condition`.
+
